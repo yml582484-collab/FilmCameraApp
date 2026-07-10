@@ -1,25 +1,68 @@
 {
   "expo": {
-    "name": "FilmCameraApp",
+    "name": "Film Cam",
     "slug": "FilmCameraApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a1a"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourname.filmcamera",
+      "infoPlist": {
+        "NSCameraUsageDescription": "需要访问相机以拍摄照片",
+        "NSPhotoLibraryUsageDescription": "需要访问相册以保存照片",
+        "NSPhotoLibraryAddUsageDescription": "需要访问相册以保存拍摄的照片",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#1a1a1a",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "package": "com.yourname.filmcamera",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "需要访问相机以拍摄照片",
+          "microphonePermission": "需要访问麦克风以录制视频"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "需要访问相册以保存照片",
+          "savePhotosPermission": "需要访问相册以保存拍摄的照片",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9aaef484-262c-4379-8810-baa419b8b2d5"
+      }
+    },
+    "owner": "lym629"
   }
 }
