@@ -272,6 +272,15 @@ export function createFilterProcessorHTML(): string {
   function applyFilter(img, params) {
     var w = img.width;
     var h = img.height;
+
+    // 大图自动缩放到最大 2048px，避免 Android WebView 卡死
+    var maxDim = 2048;
+    if (w > maxDim || h > maxDim) {
+      var scale = maxDim / Math.max(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+
     canvas.width = w;
     canvas.height = h;
     ctx.drawImage(img, 0, 0, w, h);
@@ -461,19 +470,27 @@ export function createFilterProcessorHTML(): string {
     return canvas.toDataURL('image/jpeg', 0.98);
   }
 
-  // 监听 React Native 消息
-  window.addEventListener('message', function(e) {
+  // 监听 React Native 消息（iOS 用 window，Android 用 document）
+  function handleMessage(e) {
     try {
       var msg = JSON.parse(e.data);
       if (msg.type === 'process') {
         var img = new Image();
         img.onload = function() {
-          var result = applyFilter(img, msg.params);
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            id: msg.id,
-            type: 'result',
-            data: result
-          }));
+          try {
+            var result = applyFilter(img, msg.params);
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              id: msg.id,
+              type: 'result',
+              data: result
+            }));
+          } catch (err) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              id: msg.id,
+              type: 'error',
+              error: 'Filter error: ' + err.message
+            }));
+          }
         };
         img.onerror = function(err) {
           window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -490,7 +507,12 @@ export function createFilterProcessorHTML(): string {
         error: err.message
       }));
     }
-  });
+  }
+
+  // Android: document 事件
+  document.addEventListener('message', handleMessage);
+  // iOS: window 事件
+  window.addEventListener('message', handleMessage);
 
   // 通知 RN WebView 已就绪
   window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ready' }));
