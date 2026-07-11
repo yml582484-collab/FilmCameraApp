@@ -45,7 +45,7 @@ export default function App() {
   const [galleryPhotos, setGalleryPhotos] = useState<{ uri: string; id: string; mediaType: 'photo' | 'video' }[]>([]);
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [mode, setMode] = useState<'picture' | 'video'>('picture');
-  const [aspectRatio, setAspectRatio] = useState<string | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<string | null>('9:16');
   const [focusVisible, setFocusVisible] = useState(false);
   const focusAnim = useRef(new Animated.Value(0)).current;
   const focusPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -151,10 +151,10 @@ export default function App() {
   // 切换比例
   const cycleAspectRatio = useCallback(() => {
     setAspectRatio((prev) => {
-      if (prev === null) return '4:3';
+      if (prev === '9:16') return '4:3';
       if (prev === '4:3') return '1:1';
       if (prev === '1:1') return '16:9';
-      return null;
+      return '9:16';
     });
   }, []);
 
@@ -644,10 +644,6 @@ export default function App() {
             <TouchableOpacity style={[s.flashBtn, flashMode === 'on' && s.flashBtnOn]} onPress={toggleFlash}>
               <Text style={[s.flashIcon, flashMode === 'on' && s.flashIconOn]}>⚡</Text>
             </TouchableOpacity>
-            {/* 比例切换 */}
-            <TouchableOpacity style={s.flashBtn} onPress={cycleAspectRatio}>
-              <Text style={s.flashIcon}>{aspectRatio || '⬜'}</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={s.galleryBtn} onPress={loadGalleryPhotos}>
               <Text style={s.galleryIcon}>🖼️</Text>
             </TouchableOpacity>
@@ -750,10 +746,15 @@ export default function App() {
               </TouchableOpacity>
             )}
 
-            {/* 右：切换网格 */}
-            <TouchableOpacity style={s.sideBtn} onPress={toggleGrid} activeOpacity={0.7}>
-              <Text style={s.sideIcon}>{showGrid ? '▦' : '⊞'}</Text>
-            </TouchableOpacity>
+            {/* 右：网格 + 比例 */}
+            <View style={s.rightControls}>
+              <TouchableOpacity style={s.sideBtn} onPress={cycleAspectRatio} activeOpacity={0.7}>
+                <Text style={s.ratioTxt}>{aspectRatio}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.sideBtn} onPress={toggleGrid} activeOpacity={0.7}>
+                <Text style={s.sideIcon}>{showGrid ? '▦' : '⊞'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -1070,6 +1071,17 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   sideIcon: { fontSize: 19, color: '#fff' },
+  rightControls: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  ratioTxt: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
 
   // 快门（CCD 风格：外圈金属环 → 中圈 → 内核）
   shutterOuter: {
