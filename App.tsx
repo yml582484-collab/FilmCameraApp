@@ -43,7 +43,7 @@ export default function App() {
   const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
   const [showGrid, setShowGrid] = useState(true);
   const [showGallery, setShowGallery] = useState(false);
-  const [galleryPhotos, setGalleryPhotos] = useState<{ uri: string; id: string }[]>([]);
+  const [galleryPhotos, setGalleryPhotos] = useState<{ uri: string; id: string; mediaType: 'photo' | 'video' }[]>([]);
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [mode, setMode] = useState<'picture' | 'video'>('picture');
   const [focusPoint, setFocusPoint] = useState<{ x: number; y: number } | null>(null);
@@ -185,12 +185,25 @@ export default function App() {
     }
   }, [activeFilter, isCapturing, processImage]);
 
-  // 保存照片
+  const APP_ALBUM = 'Film Cam';
+
+  // 保存照片到专属相册
   const savePhoto = useCallback(async () => {
     if (!capturedPhoto) return;
     try {
-      await MediaLibrary.saveToLibraryAsync(capturedPhoto);
-      Alert.alert('保存成功', '照片已保存到相册');
+      const asset = await MediaLibrary.saveToLibraryAsync(capturedPhoto);
+      // 添加到专属相册
+      try {
+        let album = await MediaLibrary.getAlbumAsync(APP_ALBUM);
+        if (!album) {
+          album = await MediaLibrary.createAlbumAsync(APP_ALBUM, asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+      } catch {
+        // 专辑操作失败不影响主保存流程
+      }
+      Alert.alert('保存成功', '照片已保存到 Film Cam 相册');
       setCapturedPhoto(null);
     } catch (error) {
       Alert.alert('保存失败', '请检查相册权限');
@@ -221,12 +234,22 @@ export default function App() {
     }
   }, [handleRecord]);
 
-  // 保存视频
+  // 保存视频到专属相册
   const saveVideo = useCallback(async () => {
     if (!recordedVideo) return;
     try {
-      await MediaLibrary.saveToLibraryAsync(recordedVideo);
-      Alert.alert('保存成功', '视频已保存到相册');
+      const asset = await MediaLibrary.saveToLibraryAsync(recordedVideo);
+      try {
+        let album = await MediaLibrary.getAlbumAsync(APP_ALBUM);
+        if (!album) {
+          album = await MediaLibrary.createAlbumAsync(APP_ALBUM, asset, false);
+        } else {
+          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+        }
+      } catch {
+        // 专辑操作失败不影响主保存流程
+      }
+      Alert.alert('保存成功', '视频已保存到 Film Cam 相册');
       setRecordedVideo(null);
     } catch (error) {
       Alert.alert('保存失败', '请检查相册权限');
@@ -238,38 +261,51 @@ export default function App() {
     setRecordedVideo(null);
   }, []);
 
-  // 加载相册照片
+  // 加载专属相册中的照片和视频
   const loadGalleryPhotos = useCallback(async () => {
     setShowGallery(true);
     setGalleryPhotos([]);
     
     try {
-      const assets = await MediaLibrary.getAssetsAsync({
-        mediaType: 'photo',
-        sortBy: [MediaLibrary.SortBy.modificationTime],
-        first: 50,
-      });
+      const results: { uri: string; id: string; mediaType: 'photo' | 'video' }[] = [];
       
-      const chunks = [];
-      for (let i = 0; i < assets.assets.length; i += 10) {
-        chunks.push(assets.assets.slice(i, i + 10));
-      }
-      
-      const results: { uri: string; id: string }[] = [];
-      
-      for (const chunk of chunks) {
-        const chunkResults = await Promise.all(
-          chunk.map(async (asset) => {
-            try {
-              const info = await MediaLibrary.getAssetInfoAsync(asset);
-              return { uri: info.localUri || asset.uri, id: asset.id };
-            } catch {
-              return { uri: asset.uri, id: asset.id };
-            }
-          })
-        );
-        results.push(...chunkResults);
-        setGalleryPhotos([...results]);
+      // 优先从专属相册加载
+      const album = await MediaLibrary.getAlbumAsync(APP_ALBUM);
+      if (album) {
+        const albumAssets = await MediaLibrary.getAssetsAsync({
+          album: album,
+          sortBy: [MediaLibrary.SortBy.modificationTime],
+          first: 100,
+          mediaType: ['photo', 'video'],
+        });
+        
+        const chunks = [];
+        for (let i = 0; i < albumAssets.assets.length; i += 10) {
+          chunks.push(albumAssets.assets.slice(i, i + 10));
+        }
+        
+        for (const chunk of chunks) {
+          const chunkResults = await Promise.all(
+            chunk.map(async (asset) => {
+              try {
+                const info = await MediaLibrary.getAssetInfoAsync(asset);
+                return {
+                  uri: info.localUri || asset.uri,
+                  id: asset.id,
+                  mediaType: (asset.mediaType as 'photo' | 'video') || 'photo',
+                };
+              } catch {
+                return {
+                  uri: asset.uri,
+                  id: asset.id,
+                  mediaType: (asset.mediaType as 'photo' | 'video') || 'photo',
+                };
+              }
+            })
+          );
+          results.push(...chunkResults);
+          setGalleryPhotos([...results]);
+        }
       }
     } catch (error) {
       Alert.alert('无法访问相册', '请检查权限');
@@ -331,10 +367,22 @@ export default function App() {
 
   // 相册全屏预览模式（只读查看）
   if (galleryPreviewUri) {
+    const previewAsset = galleryPhotos.find(p => p.uri === galleryPreviewUri);
+    const isVideo = previewAsset?.mediaType === 'video';
     return (
       <View style={s.previewWrap}>
         <StatusBar hidden />
-        <Image source={{ uri: galleryPreviewUri }} style={s.previewImg} resizeMode="contain" />
+        {isVideo ? (
+          <Video
+            source={{ uri: galleryPreviewUri }}
+            style={s.previewImg}
+            resizeMode={ResizeMode.CONTAIN}
+            useNativeControls
+            isLooping={false}
+          />
+        ) : (
+          <Image source={{ uri: galleryPreviewUri }} style={s.previewImg} resizeMode="contain" />
+        )}
         <TouchableOpacity
           style={s.galleryFullBackBtn}
           onPress={() => setGalleryPreviewUri(null)}
@@ -395,7 +443,7 @@ export default function App() {
           <TouchableOpacity style={s.galleryBackBtn} onPress={() => setShowGallery(false)}>
             <Text style={s.galleryBackIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={s.galleryTitle}>相册</Text>
+          <Text style={s.galleryTitle}>Film Cam</Text>
           <View style={{ width: 34 }} />
         </View>
 
@@ -408,11 +456,16 @@ export default function App() {
               onPress={() => setGalleryPreviewUri(asset.uri)}
             >
               <Image source={{ uri: asset.uri }} style={s.galleryImage} resizeMode="cover" />
+              {asset.mediaType === 'video' && (
+                <View style={s.galleryVideoBadge}>
+                  <Text style={s.galleryVideoBadgeTxt}>▶</Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
           {galleryPhotos.length === 0 && (
             <View style={s.galleryEmpty}>
-              <Text style={s.galleryEmptyTxt}>暂无照片</Text>
+              <Text style={s.galleryEmptyTxt}>暂无作品，拍摄后保存到这里</Text>
             </View>
           )}
         </ScrollView>
@@ -446,15 +499,6 @@ export default function App() {
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
-      />
-
-      {/* ===== 聚焦触摸层 ===== */}
-      <View
-        style={StyleSheet.absoluteFill}
-        onTouchStart={(e) => {
-          const touch = e.nativeEvent.touches[0];
-          handleFocus(touch.locationX, touch.locationY);
-        }}
       />
 
       {/* ===== 相机覆盖层（绘制层，不拦截触摸） ===== */}
@@ -541,8 +585,8 @@ export default function App() {
         </View>
       </View>
 
-      {/* ===== 控件层（顶层，可交互） ===== */}
-      <View style={s.controlsLayer}>
+      {/* ===== 控件层（空白区域穿透触摸到相机，按钮保留交互） ===== */}
+      <View style={s.controlsLayer} pointerEvents="box-none">
         {/* 顶部信息栏 */}
         <View style={s.topBar}>
           <View style={s.topLeft}>
@@ -1204,6 +1248,21 @@ const s = StyleSheet.create({
   galleryImage: {
     width: '100%',
     height: '100%',
+  },
+  galleryVideoBadge: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  galleryVideoBadgeTxt: {
+    fontSize: 10,
+    color: '#fff',
   },
   galleryEmpty: {
     flex: 1,

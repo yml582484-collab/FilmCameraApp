@@ -266,13 +266,13 @@ export function createFilterProcessorHTML(): string {
       }
     }
 
-    // 4. 色温
+    // 4. 色温（正确的颜色温度偏移：暖色加红减蓝，冷色反之）
     if (params.warmth !== undefined && params.warmth !== 0) {
-      var w = params.warmth;
+      var wt = params.warmth;
       for (var i = 0; i < data.length; i += 4) {
-        data[i] = clamp(data[i] + w);
-        data[i + 1] = clamp(data[i + 1] + w);
-        data[i + 2] = clamp(data[i + 2] + w);
+        data[i]     = clamp(data[i] + wt * 1.0);
+        data[i + 1] = clamp(data[i + 1] + wt * 0.25);
+        data[i + 2] = clamp(data[i + 2] - wt * 0.7);
       }
     }
 
@@ -289,23 +289,23 @@ export function createFilterProcessorHTML(): string {
       }
     }
 
-    // 6. 暗角
+    // 6. 暗角（smoothstep 曲线，更真实的胶片暗角渐变）
     if (params.vignette !== undefined && params.vignette > 0.01) {
       var cx = w / 2, cy = h / 2;
       var maxR = Math.sqrt(cx * cx + cy * cy);
-      var startR = maxR * 0.55;
+      var vigStrength = params.vignette;
       for (var y = 0; y < h; y++) {
         for (var x = 0; x < w; x++) {
-          var dx = x - cx, dy = y - cy;
+          var dx = (x - cx) / cx, dy = (y - cy) / cy;
           var dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist > startR) {
-            var factor = Math.min(1, (dist - startR) / (maxR - startR));
-            var darken = 1 - factor * params.vignette;
-            var idx = (y * w + x) * 4;
-            data[idx] = clamp(data[idx] * darken);
-            data[idx + 1] = clamp(data[idx + 1] * darken);
-            data[idx + 2] = clamp(data[idx + 2] * darken);
-          }
+          // smoothstep: 在 0.5~1.2 范围内平滑过渡
+          var edge = Math.max(0, Math.min(1, (dist - 0.5) / 0.7));
+          var smooth = edge * edge * (3 - 2 * edge);
+          var darken = 1 - smooth * vigStrength;
+          var idx = (y * w + x) * 4;
+          data[idx] = clamp(data[idx] * darken);
+          data[idx + 1] = clamp(data[idx + 1] * darken);
+          data[idx + 2] = clamp(data[idx + 2] * darken);
         }
       }
     }
@@ -321,11 +321,18 @@ export function createFilterProcessorHTML(): string {
       }
     }
 
-    // 8. 胶片颗粒效果
+    // 8. 胶片颗粒效果（高斯分布 + 亮度自适应，更真实）
     if (params.grain !== undefined && params.grain > 0.01) {
-      var grainIntensity = params.grain * 30;
+      var grainIntensity = params.grain * 40;
       for (var i = 0; i < data.length; i += 4) {
-        var noise = (Math.random() - 0.5) * grainIntensity;
+        // Box-Muller 变换生成高斯噪声
+        var u1 = Math.random(), u2 = Math.random();
+        while (u1 === 0) u1 = Math.random();
+        var gaussian = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+        // 亮度自适应：暗部颗粒更多
+        var lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
+        var adaptive = 1.2 - lum * 0.6;
+        var noise = gaussian * grainIntensity * adaptive * 0.5;
         data[i] = clamp(data[i] + noise);
         data[i + 1] = clamp(data[i + 1] + noise);
         data[i + 2] = clamp(data[i + 2] + noise);
@@ -360,7 +367,16 @@ export function createFilterProcessorHTML(): string {
 
     ctx.putImageData(imageData, 0, 0);
 
-    // 10. 边框效果
+    // 10. 胶片 S 曲线（模拟真实胶片的肩部和趾部压制）
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(canvas, 0, 0);
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(canvas, 0, 0);
+    ctx.globalAlpha = 1.0;
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 11. 边框效果
     if (params.borderStyle && params.borderStyle !== 'none') {
       if (params.borderStyle === 'polaroid') {
         ctx.fillStyle = '#ffffff';
@@ -383,7 +399,7 @@ export function createFilterProcessorHTML(): string {
       }
     }
 
-    return canvas.toDataURL('image/jpeg', 0.92);
+    return canvas.toDataURL('image/jpeg', 0.98);
   }
 
   // 监听 React Native 消息
