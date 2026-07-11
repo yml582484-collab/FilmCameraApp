@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { Video, ResizeMode } from 'expo-av';
 import {
@@ -32,7 +31,6 @@ const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
 export default function App() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
   const [facing, setFacing] = useState<CameraType>('back');
   const [activeFilter, setActiveFilter] = useState<FilmFilterPreset>(FILM_PRESETS[0]);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -47,6 +45,7 @@ export default function App() {
   const [galleryPhotos, setGalleryPhotos] = useState<{ uri: string; id: string; mediaType: 'photo' | 'video' }[]>([]);
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [mode, setMode] = useState<'picture' | 'video'>('picture');
+  const [aspectRatio, setAspectRatio] = useState<string | null>(null);
   const [focusVisible, setFocusVisible] = useState(false);
   const focusAnim = useRef(new Animated.Value(0)).current;
   const focusPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -78,11 +77,11 @@ export default function App() {
 
   // ---- 通过 WebView Canvas 处理图片 ----
   const processImage = useCallback(
-    (imageUri: string, preset: FilmFilterPreset): Promise<string> =>
+    (imageUri: string, preset: FilmFilterPreset, cropRatio?: string | null): Promise<string> =>
       new Promise(async (resolve, reject) => {
         try {
           if (!webViewRef.current) {
-            resolve(imageUri); // WebView 未就绪，返回原图
+            resolve(imageUri);
             return;
           }
           const base64 = await FileSystem.readAsStringAsync(imageUri, {
@@ -95,7 +94,7 @@ export default function App() {
             id,
             type: 'process',
             imageData: `data:image/jpeg;base64,${base64}`,
-            params: buildFilterParams(preset),
+            params: buildFilterParams(preset, cropRatio || undefined),
           });
 
           webViewRef.current.postMessage(msg);
@@ -137,8 +136,7 @@ export default function App() {
   // 权限请求
   const requestPermissions = useCallback(async () => {
     if (!cameraPermission?.granted) await requestCameraPermission();
-    if (!mediaPermission?.granted) await requestMediaPermission();
-  }, [cameraPermission, mediaPermission]);
+  }, [cameraPermission]);
 
   // 切换网格显示
   const toggleGrid = useCallback(() => {
@@ -148,6 +146,16 @@ export default function App() {
   // 切换闪光灯
   const toggleFlash = useCallback(() => {
     setFlashMode((prev) => (prev === 'off' ? 'on' : 'off'));
+  }, []);
+
+  // 切换比例
+  const cycleAspectRatio = useCallback(() => {
+    setAspectRatio((prev) => {
+      if (prev === null) return '4:3';
+      if (prev === '4:3') return '1:1';
+      if (prev === '1:1') return '16:9';
+      return null;
+    });
   }, []);
 
   // 点击聚焦（带动画反馈，不阻止原生对焦）
@@ -183,7 +191,7 @@ export default function App() {
         skipProcessing: false,
       });
       if (photo?.uri) {
-        const resultBase64 = await processImage(photo.uri, activeFilter);
+        const resultBase64 = await processImage(photo.uri, activeFilter, aspectRatio);
         const fileUri = `${FileSystem.cacheDirectory}filtered_${Date.now()}.jpg`;
         await FileSystem.writeAsStringAsync(fileUri, resultBase64, {
           encoding: FileSystem.EncodingType.Base64,
@@ -195,30 +203,24 @@ export default function App() {
     } finally {
       setIsCapturing(false);
     }
-  }, [activeFilter, isCapturing, processImage]);
+  }, [activeFilter, isCapturing, processImage, aspectRatio]);
 
-  const APP_ALBUM = 'Film Cam';
+  const APP_STORAGE = `${FileSystem.documentDirectory}film_cam/`;
 
-  // 保存照片到专属相册
+  // 保存照片到 App 私有目录
   const savePhoto = useCallback(async () => {
     if (!capturedPhoto) return;
     try {
-      const asset = await MediaLibrary.saveToLibraryAsync(capturedPhoto);
-      // 添加到专属相册
-      try {
-        let album = await MediaLibrary.getAlbumAsync(APP_ALBUM);
-        if (!album) {
-          album = await MediaLibrary.createAlbumAsync(APP_ALBUM, asset, false);
-        } else {
-          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
-        }
-      } catch {
-        // 专辑操作失败不影响主保存流程
-      }
-      Alert.alert('保存成功', '照片已保存到 Film Cam 相册');
+      await FileSystem.makeDirectoryAsync(APP_STORAGE, { intermediates: true });
+      const filename = `photo_${Date.now()}.jpg`;
+      const destUri = `${APP_STORAGE}${filename}`;
+      await FileSystem.copyAsync({ from: capturedPhoto, to: destUri });
+      // 清理临时文件
+      await FileSystem.deleteAsync(capturedPhoto, { idempotent: true }).catch(() => {});
+      Alert.alert('保存成功', '照片已保存到 App 相册');
       setCapturedPhoto(null);
     } catch (error) {
-      Alert.alert('保存失败', '请检查相册权限');
+      Alert.alert('保存失败', '请重试');
     }
   }, [capturedPhoto]);
 
@@ -246,25 +248,19 @@ export default function App() {
     }
   }, [handleRecord]);
 
-  // 保存视频到专属相册
+  // 保存视频到 App 私有目录
   const saveVideo = useCallback(async () => {
     if (!recordedVideo) return;
     try {
-      const asset = await MediaLibrary.saveToLibraryAsync(recordedVideo);
-      try {
-        let album = await MediaLibrary.getAlbumAsync(APP_ALBUM);
-        if (!album) {
-          album = await MediaLibrary.createAlbumAsync(APP_ALBUM, asset, false);
-        } else {
-          await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
-        }
-      } catch {
-        // 专辑操作失败不影响主保存流程
-      }
-      Alert.alert('保存成功', '视频已保存到 Film Cam 相册');
+      await FileSystem.makeDirectoryAsync(APP_STORAGE, { intermediates: true });
+      const filename = `video_${Date.now()}.mp4`;
+      const destUri = `${APP_STORAGE}${filename}`;
+      await FileSystem.copyAsync({ from: recordedVideo, to: destUri });
+      await FileSystem.deleteAsync(recordedVideo, { idempotent: true }).catch(() => {});
+      Alert.alert('保存成功', '视频已保存到 App 相册');
       setRecordedVideo(null);
     } catch (error) {
-      Alert.alert('保存失败', '请检查相册权限');
+      Alert.alert('保存失败', '请重试');
     }
   }, [recordedVideo]);
 
@@ -273,54 +269,31 @@ export default function App() {
     setRecordedVideo(null);
   }, []);
 
-  // 加载专属相册中的照片和视频
+  // 加载 App 私有目录中的照片和视频
   const loadGalleryPhotos = useCallback(async () => {
     setShowGallery(true);
     setGalleryPhotos([]);
-    
+
     try {
-      const results: { uri: string; id: string; mediaType: 'photo' | 'video' }[] = [];
-      
-      // 优先从专属相册加载
-      const album = await MediaLibrary.getAlbumAsync(APP_ALBUM);
-      if (album) {
-        const albumAssets = await MediaLibrary.getAssetsAsync({
-          album: album,
-          sortBy: [MediaLibrary.SortBy.modificationTime],
-          first: 100,
-          mediaType: ['photo', 'video'],
-        });
-        
-        const chunks = [];
-        for (let i = 0; i < albumAssets.assets.length; i += 10) {
-          chunks.push(albumAssets.assets.slice(i, i + 10));
-        }
-        
-        for (const chunk of chunks) {
-          const chunkResults = await Promise.all(
-            chunk.map(async (asset) => {
-              try {
-                const info = await MediaLibrary.getAssetInfoAsync(asset);
-                return {
-                  uri: info.localUri || asset.uri,
-                  id: asset.id,
-                  mediaType: (asset.mediaType as 'photo' | 'video') || 'photo',
-                };
-              } catch {
-                return {
-                  uri: asset.uri,
-                  id: asset.id,
-                  mediaType: (asset.mediaType as 'photo' | 'video') || 'photo',
-                };
-              }
-            })
-          );
-          results.push(...chunkResults);
-          setGalleryPhotos([...results]);
-        }
+      const dirInfo = await FileSystem.getInfoAsync(APP_STORAGE);
+      if (!dirInfo.exists) {
+        return;
       }
+      const files = await FileSystem.readDirectoryAsync(APP_STORAGE);
+      const sorted = files.sort().reverse();
+      const results: { uri: string; id: string; mediaType: 'photo' | 'video' }[] = [];
+
+      for (const file of sorted) {
+        const isVideo = file.endsWith('.mp4');
+        results.push({
+          uri: `${APP_STORAGE}${file}`,
+          id: file,
+          mediaType: isVideo ? 'video' : 'photo',
+        });
+      }
+      setGalleryPhotos(results);
     } catch (error) {
-      Alert.alert('无法访问相册', '请检查权限');
+      Alert.alert('无法加载相册', '请重试');
       setShowGallery(false);
     }
   }, []);
@@ -526,6 +499,37 @@ export default function App() {
 
       {/* ===== 相机覆盖层（绘制层，不拦截触摸） ===== */}
       <View style={[s.overlayWrap, { pointerEvents: 'none' }]}>
+        {/* 比例取景框遮罩 */}
+        {aspectRatio && (() => {
+          const [rw, rh] = aspectRatio.split(':').map(Number);
+          const targetRatio = rw / rh;
+          const camHeight = WINDOW_HEIGHT;
+          const camWidth = WINDOW_WIDTH;
+          const imgRatio = camWidth / camHeight;
+          let frameW: number, frameH: number;
+          if (imgRatio > targetRatio) {
+            frameH = camHeight;
+            frameW = camHeight * targetRatio;
+          } else {
+            frameW = camWidth;
+            frameH = camWidth / targetRatio;
+          }
+          const frameX = (camWidth - frameW) / 2;
+          const frameY = (camHeight - frameH) / 2;
+          const barSize = (Math.max(camWidth, camHeight) - Math.min(frameW, frameH)) / 2;
+          return (
+            <>
+              {/* 上 */}
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: frameY, backgroundColor: 'rgba(0,0,0,0.55)' }} />
+              {/* 下 */}
+              <View style={{ position: 'absolute', top: frameY + frameH, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)' }} />
+              {/* 左 */}
+              <View style={{ position: 'absolute', top: frameY, left: 0, width: frameX, height: frameH, backgroundColor: 'rgba(0,0,0,0.55)' }} />
+              {/* 右 */}
+              <View style={{ position: 'absolute', top: frameY, right: 0, width: frameX, height: frameH, backgroundColor: 'rgba(0,0,0,0.55)' }} />
+            </>
+          );
+        })()}
         {/* 取景框四角 */}
         <View style={s.cornerTL} />
         <View style={s.cornerTR} />
@@ -639,6 +643,10 @@ export default function App() {
             {/* 闪光灯切换 */}
             <TouchableOpacity style={[s.flashBtn, flashMode === 'on' && s.flashBtnOn]} onPress={toggleFlash}>
               <Text style={[s.flashIcon, flashMode === 'on' && s.flashIconOn]}>⚡</Text>
+            </TouchableOpacity>
+            {/* 比例切换 */}
+            <TouchableOpacity style={s.flashBtn} onPress={cycleAspectRatio}>
+              <Text style={s.flashIcon}>{aspectRatio || '⬜'}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.galleryBtn} onPress={loadGalleryPhotos}>
               <Text style={s.galleryIcon}>🖼️</Text>

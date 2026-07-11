@@ -432,6 +432,32 @@ export function createFilterProcessorHTML(): string {
       }
     }
 
+    // 裁剪到指定比例
+    if (params.cropRatio) {
+      var parts = params.cropRatio.split(':');
+      var targetW = parseInt(parts[0]);
+      var targetH = parseInt(parts[1]);
+      var imgRatio = w / h;
+      var targetRatio = targetW / targetH;
+      var cropW, cropH;
+      if (imgRatio > targetRatio) {
+        cropH = h;
+        cropW = h * targetRatio;
+      } else {
+        cropW = w;
+        cropH = w / targetRatio;
+      }
+      var cropX = (w - cropW) / 2;
+      var cropY = (h - cropH) / 2;
+
+      var cropCanvas = document.createElement('canvas');
+      cropCanvas.width = Math.round(cropW);
+      cropCanvas.height = Math.round(cropH);
+      var cropCtx = cropCanvas.getContext('2d');
+      cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropCanvas.width, cropCanvas.height);
+      return cropCanvas.toDataURL('image/jpeg', 0.98);
+    }
+
     return canvas.toDataURL('image/jpeg', 0.98);
   }
 
@@ -476,7 +502,7 @@ export function createFilterProcessorHTML(): string {
 /**
  * 构建传给 WebView 的滤镜参数对象
  */
-export function buildFilterParams(preset: FilmFilterPreset) {
+export function buildFilterParams(preset: FilmFilterPreset, cropRatio?: string) {
   const tint = parseTint(preset.overlayTint);
   const leakColor = parseTint(preset.lightLeakColor);
   return {
@@ -499,5 +525,6 @@ export function buildFilterParams(preset: FilmFilterPreset) {
     shadows: preset.shadows,
     highlights: preset.highlights,
     sharpen: preset.sharpen,
+    cropRatio: cropRatio || null,
   };
 }
