@@ -747,7 +747,7 @@ export default function App() {
             {/* 右：网格 + 比例 */}
             <View style={s.rightControls}>
               <TouchableOpacity style={s.sideBtn} onPress={cycleAspectRatio} activeOpacity={0.7}>
-                <Text style={s.ratioTxt}>{aspectRatio ? '全' : '1:1'}</Text>
+                <Text style={s.ratioTxt}>{aspectRatio ? '1:1' : '全'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={s.sideBtn} onPress={toggleGrid} activeOpacity={0.7}>
                 <Text style={s.sideIcon}>{showGrid ? '▦' : '⊞'}</Text>
