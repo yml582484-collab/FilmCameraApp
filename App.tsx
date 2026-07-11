@@ -391,6 +391,16 @@ export default function App() {
           useNativeControls
           isLooping={false}
         />
+        {/* 叠加滤镜色调层模拟滤镜效果 */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: activeFilter.overlayTint,
+            opacity: activeFilter.overlayOpacity * 0.6,
+            pointerEvents: 'none',
+          }}
+        />
 
         {/* 顶部信息条 */}
         <View style={s.previewTopBar}>
@@ -1056,8 +1066,8 @@ const s = StyleSheet.create({
   controlRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 36,
+    justifyContent: 'space-between',
+    paddingHorizontal: 40,
     paddingTop: 4,
     paddingBottom: 2,
   },
