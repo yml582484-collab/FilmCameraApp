@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { Video, ResizeMode } from 'expo-av';
 import {
@@ -31,6 +32,7 @@ const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
 export default function App() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
   const [facing, setFacing] = useState<CameraType>('back');
   const [activeFilter, setActiveFilter] = useState<FilmFilterPreset>(FILM_PRESETS[0]);
   const [activeCategory, setActiveCategory] = useState('all');
@@ -136,7 +138,8 @@ export default function App() {
   // 权限请求
   const requestPermissions = useCallback(async () => {
     if (!cameraPermission?.granted) await requestCameraPermission();
-  }, [cameraPermission]);
+    if (!mediaPermission?.granted) await requestMediaPermission();
+  }, [cameraPermission, mediaPermission]);
 
   // 切换网格显示
   const toggleGrid = useCallback(() => {
@@ -153,7 +156,6 @@ export default function App() {
     setAspectRatio((prev) => {
       if (prev === '9:16') return '4:3';
       if (prev === '4:3') return '1:1';
-      if (prev === '1:1') return '16:9';
       return '9:16';
     });
   }, []);
@@ -207,17 +209,19 @@ export default function App() {
 
   const APP_STORAGE = `${FileSystem.documentDirectory}film_cam/`;
 
-  // 保存照片到 App 私有目录
+  // 保存照片到 App 相册 + 系统相册
   const savePhoto = useCallback(async () => {
     if (!capturedPhoto) return;
     try {
+      // 存到 App 私有目录
       await FileSystem.makeDirectoryAsync(APP_STORAGE, { intermediates: true });
       const filename = `photo_${Date.now()}.jpg`;
       const destUri = `${APP_STORAGE}${filename}`;
       await FileSystem.copyAsync({ from: capturedPhoto, to: destUri });
-      // 清理临时文件
+      // 同时存到系统相册
+      try { await MediaLibrary.saveToLibraryAsync(destUri); } catch {}
       await FileSystem.deleteAsync(capturedPhoto, { idempotent: true }).catch(() => {});
-      Alert.alert('保存成功', '照片已保存到 App 相册');
+      Alert.alert('保存成功', '照片已保存到 App 相册和系统相册');
       setCapturedPhoto(null);
     } catch (error) {
       Alert.alert('保存失败', '请重试');
@@ -248,7 +252,7 @@ export default function App() {
     }
   }, [handleRecord]);
 
-  // 保存视频到 App 私有目录
+  // 保存视频到 App 相册 + 系统相册
   const saveVideo = useCallback(async () => {
     if (!recordedVideo) return;
     try {
@@ -256,8 +260,9 @@ export default function App() {
       const filename = `video_${Date.now()}.mp4`;
       const destUri = `${APP_STORAGE}${filename}`;
       await FileSystem.copyAsync({ from: recordedVideo, to: destUri });
+      try { await MediaLibrary.saveToLibraryAsync(destUri); } catch {}
       await FileSystem.deleteAsync(recordedVideo, { idempotent: true }).catch(() => {});
-      Alert.alert('保存成功', '视频已保存到 App 相册');
+      Alert.alert('保存成功', '视频已保存到 App 相册和系统相册');
       setRecordedVideo(null);
     } catch (error) {
       Alert.alert('保存失败', '请重试');
@@ -499,33 +504,30 @@ export default function App() {
 
       {/* ===== 相机覆盖层（绘制层，不拦截触摸） ===== */}
       <View style={[s.overlayWrap, { pointerEvents: 'none' }]}>
-        {/* 比例取景框遮罩 */}
+        {/* 比例取景框遮罩 — 限制在底部控制面板上方 */}
         {aspectRatio && (() => {
           const [rw, rh] = aspectRatio.split(':').map(Number);
           const targetRatio = rw / rh;
-          const camHeight = WINDOW_HEIGHT;
-          const camWidth = WINDOW_WIDTH;
-          const imgRatio = camWidth / camHeight;
+          const topBarH = 90;
+          const bottomAreaH = 230;
+          const availH = WINDOW_HEIGHT - topBarH - bottomAreaH;
+          const availW = WINDOW_WIDTH;
+          const imgRatio = availW / availH;
           let frameW: number, frameH: number;
           if (imgRatio > targetRatio) {
-            frameH = camHeight;
-            frameW = camHeight * targetRatio;
+            frameH = availH;
+            frameW = availH * targetRatio;
           } else {
-            frameW = camWidth;
-            frameH = camWidth / targetRatio;
+            frameW = availW;
+            frameH = availW / targetRatio;
           }
-          const frameX = (camWidth - frameW) / 2;
-          const frameY = (camHeight - frameH) / 2;
-          const barSize = (Math.max(camWidth, camHeight) - Math.min(frameW, frameH)) / 2;
+          const frameX = (availW - frameW) / 2;
+          const frameY = topBarH + (availH - frameH) / 2;
           return (
             <>
-              {/* 上 */}
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: frameY, backgroundColor: 'rgba(0,0,0,0.55)' }} />
-              {/* 下 */}
               <View style={{ position: 'absolute', top: frameY + frameH, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)' }} />
-              {/* 左 */}
               <View style={{ position: 'absolute', top: frameY, left: 0, width: frameX, height: frameH, backgroundColor: 'rgba(0,0,0,0.55)' }} />
-              {/* 右 */}
               <View style={{ position: 'absolute', top: frameY, right: 0, width: frameX, height: frameH, backgroundColor: 'rgba(0,0,0,0.55)' }} />
             </>
           );
