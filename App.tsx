@@ -53,6 +53,7 @@ export default function App() {
   const focusPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const cameraRef = useRef<CameraView>(null);
   const webViewRef = useRef<WebView>(null);
+  const webViewReady = useRef(false);
   const pendingRequests = useRef<Map<string, { resolve: (v: string) => void; reject: (e: Error) => void }>>(new Map());
 
   // ---- WebView 消息处理 ----
@@ -60,6 +61,7 @@ export default function App() {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === 'ready') {
+        webViewReady.current = true;
         console.log('Filter processor ready');
         return;
       }
@@ -82,13 +84,35 @@ export default function App() {
     (imageUri: string, preset: FilmFilterPreset, cropRatio?: string | null): Promise<string> =>
       new Promise(async (resolve, reject) => {
         try {
-          if (!webViewRef.current) {
+          // 等待 WebView 就绪（最多 5 秒）
+          let waitCount = 0;
+          while (!webViewReady.current && waitCount < 50) {
+            await new Promise(r => setTimeout(r, 100));
+            waitCount++;
+          }
+
+          if (!webViewRef.current || !webViewReady.current) {
+            // WebView 未就绪，返回原图（无滤镜）
             resolve(imageUri);
             return;
           }
-          const base64 = await FileSystem.readAsStringAsync(imageUri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+
+          // 读取图片为 base64
+          let base64: string;
+          try {
+            base64 = await FileSystem.readAsStringAsync(imageUri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+          } catch (readErr) {
+            // Android 上 content:// URI 可能需要先复制到 cache
+            const cacheUri = `${FileSystem.cacheDirectory}temp_${Date.now()}.jpg`;
+            await FileSystem.copyAsync({ from: imageUri, to: cacheUri });
+            base64 = await FileSystem.readAsStringAsync(cacheUri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            await FileSystem.deleteAsync(cacheUri, { idempotent: true }).catch(() => {});
+          }
+
           const id = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
           pendingRequests.current.set(id, { resolve, reject });
 
@@ -186,15 +210,30 @@ export default function App() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
-        skipProcessing: false,
+        skipProcessing: true,
       });
       if (photo?.uri) {
-        const resultBase64 = await processImage(photo.uri, activeFilter, aspectRatio);
-        const fileUri = `${FileSystem.cacheDirectory}filtered_${Date.now()}.jpg`;
-        await FileSystem.writeAsStringAsync(fileUri, resultBase64, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        setCapturedPhoto(fileUri);
+        let finalUri = photo.uri;
+
+        // Android: 如果是 content:// URI，先复制到 cache
+        if (photo.uri.startsWith('content://')) {
+          const cacheUri = `${FileSystem.cacheDirectory}capture_${Date.now()}.jpg`;
+          await FileSystem.copyAsync({ from: photo.uri, to: cacheUri });
+          finalUri = cacheUri;
+        }
+
+        // 应用滤镜
+        try {
+          const resultBase64 = await processImage(finalUri, activeFilter, aspectRatio);
+          const fileUri = `${FileSystem.cacheDirectory}filtered_${Date.now()}.jpg`;
+          await FileSystem.writeAsStringAsync(fileUri, resultBase64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          setCapturedPhoto(fileUri);
+        } catch (filterError) {
+          // 滤镜失败时降级为原图
+          setCapturedPhoto(finalUri);
+        }
       }
     } catch (error) {
       Alert.alert('拍照失败', '请重试');
@@ -502,10 +541,12 @@ export default function App() {
         style={s.filterProcessor}
         onMessage={onWebViewMessage}
         javaScriptEnabled={true}
+        domStorageEnabled={true}
         originWhitelist={['*']}
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
+        mixedContentMode="compatibility"
       />
 
       {/* ===== 相机覆盖层（绘制层，不拦截触摸） ===== */}
