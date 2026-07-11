@@ -23,109 +23,151 @@ export interface FilmFilterPreset {
   lightLeakColor: string;
   borderStyle: 'none' | 'polaroid' | 'film-strip' | 'wide';
   fade: number;
+  shadows: number;
+  highlights: number;
+  sharpen: number;
 }
 
 export const FILM_PRESETS: FilmFilterPreset[] = [
   { id: 'portra400',  name: 'Portra 400',    subtitle: '柯达人像经典',     category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#d4a574',
     overlayTint: 'rgba(212,165,116,1)',   overlayOpacity: 0.10, overlayBlend: 'warm',   saturation: 0.05, warmth: 18,  contrast: 0.90, vignette: 0.20,
-    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -5, sharpen: 0.3 },
   { id: 'portra800',  name: 'Portra 800',    subtitle: '高感人像',         category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#c9956a',
     overlayTint: 'rgba(200,150,100,1)',    overlayOpacity: 0.13, overlayBlend: 'warm',   saturation: 0.02, warmth: 22,  contrast: 0.95, vignette: 0.25,
-    grain: 0.15, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.15, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 10, highlights: -8, sharpen: 0.2 },
   { id: 'gold200',    name: 'Gold 200',      subtitle: '日常万能卷',       category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#e8c56d',
     overlayTint: 'rgba(232,197,109,1)',    overlayOpacity: 0.12, overlayBlend: 'golden', saturation: 0.15, warmth: 14,  contrast: 1.05, vignette: 0.15,
-    grain: 0.08, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.08, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: 0, sharpen: 0.4 },
   { id: 'ektar100',   name: 'Ektar 100',     subtitle: '专业风光',         category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#d98c45',
     overlayTint: 'rgba(217,140,69,1)',     overlayOpacity: 0.14, overlayBlend: 'vivid',  saturation: 0.30, warmth: 8,   contrast: 1.15, vignette: 0.18,
-    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -10, sharpen: 0.5 },
   { id: 'trix400',    name: 'Tri-X 400',     subtitle: '经典黑白',         category: 'kodak', brand: 'Kodak', isBW: true,  canisterColor: '#555555',
     overlayTint: 'rgba(40,35,30,1)',      overlayOpacity: 0.22, overlayBlend: 'bw',      saturation: -1,   warmth: 0,   contrast: 1.35, vignette: 0.28,
-    grain: 0.35, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.35, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 12, highlights: -5, sharpen: 0.4 },
   { id: 'ektachrome', name: 'Ektachrome E100', subtitle: '经典反转片',      category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#4a7ca8',
     overlayTint: 'rgba(74,124,168,1)',     overlayOpacity: 0.08, overlayBlend: 'slide',  saturation: 0.45, warmth: -5,  contrast: 1.25, vignette: 0.12,
-    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -12, sharpen: 0.5 },
+  { id: 'portra160',  name: 'Portra 160',    subtitle: '细腻人像',         category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#e0c0a0',
+    overlayTint: 'rgba(224,192,160,1)',   overlayOpacity: 0.08, overlayBlend: 'warm',   saturation: 0.02, warmth: 12,  contrast: 0.88, vignette: 0.15,
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -3, sharpen: 0.2 },
+  { id: 'ultramax400',name: 'UltraMax 400',   subtitle: '鲜艳日用',         category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#e07040',
+    overlayTint: 'rgba(224,112,64,1)',    overlayOpacity: 0.10, overlayBlend: 'vivid',  saturation: 0.22, warmth: 10,  contrast: 1.10, vignette: 0.18,
+    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -5, sharpen: 0.3 },
+  { id: 'colorplus200',name:'ColorPlus 200',   subtitle: '经济鲜艳',         category: 'kodak', brand: 'Kodak', isBW: false, canisterColor: '#d4a050',
+    overlayTint: 'rgba(212,160,80,1)',    overlayOpacity: 0.12, overlayBlend: 'golden', saturation: 0.18, warmth: 16,  contrast: 1.08, vignette: 0.16,
+    grain: 0.12, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 3, highlights: 0, sharpen: 0.3 },
   { id: 'velvia50',   name: 'Velvia 50',     subtitle: '富士鲜艳',         category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#5a9e4c',
     overlayTint: 'rgba(90,158,76,1)',      overlayOpacity: 0.11, overlayBlend: 'vivid',  saturation: 0.50, warmth: -8,  contrast: 1.30, vignette: 0.16,
-    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -15, sharpen: 0.5 },
   { id: 'provia100f', name: 'Provia 100F',   subtitle: '专业中性',         category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#6ba88a',
     overlayTint: 'rgba(107,168,138,1)',     overlayOpacity: 0.06, overlayBlend: 'neutral',saturation: 0.10, warmth: -2,  contrast: 1.10, vignette: 0.10,
-    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -5, sharpen: 0.4 },
   { id: 'superia400', name: 'Superia 400',   subtitle: '消费级日常',       category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#4a8fad',
     overlayTint: 'rgba(74,143,173,1)',     overlayOpacity: 0.09, overlayBlend: 'cool',   saturation: 0.08, warmth: -12, contrast: 1.00, vignette: 0.18,
-    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 3, highlights: 0, sharpen: 0.3 },
   { id: 'c200',       name: 'C200',          subtitle: '入门经济卷',       category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#7ab09a',
     overlayTint: 'rgba(122,176,154,1)',     overlayOpacity: 0.07, overlayBlend: 'soft',   saturation: 0.03, warmth: -6,  contrast: 0.92, vignette: 0.14,
-    grain: 0.12, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.12, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 3, highlights: 0, sharpen: 0.2 },
   { id: 'astia100',   name: 'Astia 100',     subtitle: '柔和人像',         category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#d4b87a',
     overlayTint: 'rgba(212,184,122,1)',     overlayOpacity: 0.07, overlayBlend: 'soft',   saturation: -0.05,warmth: 6,   contrast: 0.88, vignette: 0.12,
-    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -3, sharpen: 0.2 },
+  { id: 'natura1600', name: 'Natura 1600',   subtitle: '高感柔光',         category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#f0a0b0',
+    overlayTint: 'rgba(240,160,176,1)',     overlayOpacity: 0.10, overlayBlend: 'soft',   saturation: 0.08, warmth: 8,   contrast: 0.92, vignette: 0.20,
+    grain: 0.18, lightLeak: 0, lightLeakColor: 'rgba(255,180,200,0.2)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -5, sharpen: 0.2 },
+  { id: 'pro400h',   name: 'Pro 400H',      subtitle: '专业日光',         category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#80c0a0',
+    overlayTint: 'rgba(128,192,160,1)',     overlayOpacity: 0.05, overlayBlend: 'neutral',saturation: 0.05, warmth: -4,  contrast: 0.95, vignette: 0.10,
+    grain: 0.08, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -3, sharpen: 0.3 },
+  { id: 'reala500',  name: 'Reala 500',     subtitle: '真实色彩',         category: 'fuji',  brand: 'Fuji',  isBW: false, canisterColor: '#60a080',
+    overlayTint: 'rgba(96,160,128,1)',      overlayOpacity: 0.06, overlayBlend: 'neutral',saturation: 0.08, warmth: 2,   contrast: 1.02, vignette: 0.10,
+    grain: 0.05, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 3, highlights: -2, sharpen: 0.4 },
   { id: 'hp5plus',    name: 'HP5 Plus',      subtitle: '伊尔福经典黑白',   category: 'ilford',brand: 'Ilford',isBW: true,  canisterColor: '#3a3a3a',
     overlayTint: 'rgba(35,32,28,1)',      overlayOpacity: 0.26, overlayBlend: 'bw-contrast', saturation: -1, warmth: 0,   contrast: 1.28, vignette: 0.30,
-    grain: 0.40, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.40, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 12, highlights: -8, sharpen: 0.3 },
   { id: 'delta400',   name: 'Delta 400',     subtitle: '细腻层次',         category: 'ilford',brand: 'Ilford',isBW: true,  canisterColor: '#606060',
     overlayTint: 'rgba(45,42,38,1)',      overlayOpacity: 0.18, overlayBlend: 'bw-smooth', saturation: -1, warmth: 0,   contrast: 1.10, vignette: 0.22,
-    grain: 0.15, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.15, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -3, sharpen: 0.4 },
   { id: 'fp4plus',    name: 'FP4 Plus',      subtitle: '传统颗粒',         category: 'ilford',brand: 'Ilford',isBW: true,  canisterColor: '#787878',
     overlayTint: 'rgba(50,47,43,1)',      overlayOpacity: 0.20, overlayBlend: 'bw-grain', saturation: -1, warmth: 0,   contrast: 1.15, vignette: 0.25,
-    grain: 0.30, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.30, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -5, sharpen: 0.3 },
+  { id: 'xp2super',   name: 'XP2 Super',     subtitle: '染料型黑白',       category: 'ilford',brand: 'Ilford',isBW: true,  canisterColor: '#505050',
+    overlayTint: 'rgba(42,40,36,1)',      overlayOpacity: 0.15, overlayBlend: 'bw-smooth', saturation: -1, warmth: 3,   contrast: 1.05, vignette: 0.20,
+    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -3, sharpen: 0.5 },
+  { id: 'panf50',     name: 'Pan F Plus',    subtitle: '超细颗粒',         category: 'ilford',brand: 'Ilford',isBW: true,  canisterColor: '#909090',
+    overlayTint: 'rgba(48,45,40,1)',      overlayOpacity: 0.12, overlayBlend: 'bw-smooth', saturation: -1, warmth: 0,   contrast: 1.20, vignette: 0.18,
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -8, sharpen: 0.6 },
   { id: 'cinestill800t', name: '800T',       subtitle: '霓虹夜景电影卷',   category: 'cinestill', brand: 'CineStill', isBW: false, canisterColor: '#8b3a62',
     overlayTint: 'rgba(139,58,98,1)',      overlayOpacity: 0.15, overlayBlend: 'neon',   saturation: 0.20, warmth: -15, contrast: 1.18, vignette: 0.22,
-    grain: 0.20, lightLeak: 0.15, lightLeakColor: 'rgba(255,100,150,0.25)', borderStyle: 'none', fade: 0 },
+    grain: 0.20, lightLeak: 0.15, lightLeakColor: 'rgba(255,100,150,0.25)', borderStyle: 'none', fade: 0, shadows: 10, highlights: -10, sharpen: 0.3 },
   { id: 'cinestill50d',  name: '50D',        subtitle: '日光电影卷',       category: 'cinestill', brand: 'CineStill', isBW: false, canisterColor: '#6a9ebd',
     overlayTint: 'rgba(106,158,189,1)',     overlayOpacity: 0.07, overlayBlend: 'daylight-cine',saturation: 0.12, warmth: 2, contrast: 1.08, vignette: 0.10,
-    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -5, sharpen: 0.4 },
   { id: 'canon_ixus', name: 'Canon IXUS',   subtitle: '冷白皮粉调',       category: 'ccd',   brand: 'CCD',   isBW: false, canisterColor: '#c8b8d8',
     overlayTint: 'rgba(200,184,216,1)',     overlayOpacity: 0.08, overlayBlend: 'ccd-cool', saturation: -0.15,warmth: -10, contrast: 1.05, vignette: 0.08,
-    grain: 0.05, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.05, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 3, highlights: -5, sharpen: 0.2 },
   { id: 'olympus_u',  name: 'Olympus μ',    subtitle: '奶油青橙',         category: 'ccd',   brand: 'CCD',   isBW: false, canisterColor: '#8fcfa8',
     overlayTint: 'rgba(143,207,168,1)',     overlayOpacity: 0.09, overlayBlend: 'ccd-cream',saturation: 0.05, warmth: 4,   contrast: 0.95, vignette: 0.10,
-    grain: 0.08, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.08, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: 0, sharpen: 0.2 },
   { id: 'sony_w200',  name: 'Sony W200',    subtitle: '街拍冷灰',         category: 'ccd',   brand: 'CCD',   isBW: false, canisterColor: '#a8b8c8',
     overlayTint: 'rgba(168,184,200,1)',     overlayOpacity: 0.10, overlayBlend: 'ccd-cold', saturation: -0.20,warmth: -18, contrast: 1.08, vignette: 0.12,
-    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -3, sharpen: 0.3 },
   { id: 'ricoh_gr',   name: 'Ricoh GR',     subtitle: '高对比街拍',       category: 'ccd',   brand: 'CCD',   isBW: false, canisterColor: '#b8a888',
     overlayTint: 'rgba(184,168,136,1)',     overlayOpacity: 0.07, overlayBlend: 'ccd-snap', saturation: -0.08, warmth: -5,  contrast: 1.20, vignette: 0.15,
-    grain: 0.12, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.12, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -8, sharpen: 0.5 },
+  { id: 'nikon_coopix', name: 'Nikon S',    subtitle: '日系清新',         category: 'ccd',   brand: 'CCD',   isBW: false, canisterColor: '#f0d0a0',
+    overlayTint: 'rgba(240,208,160,1)',     overlayOpacity: 0.08, overlayBlend: 'ccd-cream',saturation: 0.05, warmth: 8,   contrast: 0.92, vignette: 0.10,
+    grain: 0.06, lightLeak: 0, lightLeakColor: 'rgba(255,220,180,0.15)', borderStyle: 'none', fade: 0, shadows: 3, highlights: 0, sharpen: 0.2 },
+  { id: 'pentax_ist', name: 'Pentax *ist',  subtitle: '复古数码',         category: 'ccd',   brand: 'CCD',   isBW: false, canisterColor: '#c0a888',
+    overlayTint: 'rgba(192,168,136,1)',     overlayOpacity: 0.10, overlayBlend: 'warm',   saturation: -0.10,warmth: 10,  contrast: 1.00, vignette: 0.12,
+    grain: 0.08, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 5, highlights: 0, sharpen: 0.2 },
   { id: 'polaroid600',name: 'Polaroid 600',  subtitle: '梦幻褪色',         category: 'polaroid',brand: 'Polaroid',isBW: false, canisterColor: '#c89878',
     overlayTint: 'rgba(200,152,120,1)',     overlayOpacity: 0.18, overlayBlend: 'dream',  saturation: -0.25,warmth: 12,  contrast: 0.85, vignette: 0.30,
-    grain: 0.15, lightLeak: 0.10, lightLeakColor: 'rgba(255,200,150,0.2)', borderStyle: 'polaroid', fade: 0.20 },
+    grain: 0.15, lightLeak: 0.10, lightLeakColor: 'rgba(255,200,150,0.2)', borderStyle: 'polaroid', fade: 0.20, shadows: 5, highlights: 0, sharpen: 0 },
   { id: 'sx70',       name: 'SX-70',        subtitle: '温暖怀旧',         category: 'polaroid',brand: 'Polaroid',isBW: false, canisterColor: '#d4a868',
     overlayTint: 'rgba(212,168,104,1)',     overlayOpacity: 0.14, overlayBlend: 'vintage-warm',saturation: -0.15,warmth: 18,  contrast: 0.90, vignette: 0.25,
-    grain: 0.12, lightLeak: 0.08, lightLeakColor: 'rgba(255,180,100,0.18)', borderStyle: 'polaroid', fade: 0.15 },
+    grain: 0.12, lightLeak: 0.08, lightLeakColor: 'rgba(255,180,100,0.18)', borderStyle: 'polaroid', fade: 0.15, shadows: 8, highlights: 0, sharpen: 0 },
   { id: 'polaroid_bw',name: 'Polaroid B&W', subtitle: '即时黑白',         category: 'polaroid',brand: 'Polaroid',isBW: true,  canisterColor: '#888888',
     overlayTint: 'rgba(55,50,45,1)',      overlayOpacity: 0.24, overlayBlend: 'inst-bw', saturation: -1,   warmth: 4,   contrast: 1.12, vignette: 0.28,
-    grain: 0.25, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'polaroid', fade: 0.10 },
+    grain: 0.25, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'polaroid', fade: 0.10, shadows: 8, highlights: -3, sharpen: 0.2 },
   { id: 'agfavista',  name: 'Vista 200',     subtitle: '欧式蓝绿冷艳',     category: 'agfa',  brand: 'Agfa',  isBW: false, canisterColor: '#4a8a9a',
     overlayTint: 'rgba(74,138,154,1)',     overlayOpacity: 0.12, overlayBlend: 'eu-cool', saturation: 0.03, warmth: -20, contrast: 1.02, vignette: 0.18,
-    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.10, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 3, highlights: 0, sharpen: 0.3 },
+  { id: 'apx400',     name: 'APX 400',       subtitle: 'Agfa黑白',         category: 'agfa',  brand: 'Agfa',  isBW: true,  canisterColor: '#404040',
+    overlayTint: 'rgba(38,36,32,1)',      overlayOpacity: 0.20, overlayBlend: 'bw-contrast', saturation: -1, warmth: 0,   contrast: 1.22, vignette: 0.25,
+    grain: 0.30, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 10, highlights: -5, sharpen: 0.4 },
   
   // ============================================================
   // 复古风格滤镜
   // ============================================================
   { id: 'vintage_yellow', name: '老照片泛黄',   subtitle: '岁月痕迹',         category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#c9a858',
     overlayTint: 'rgba(201,168,88,1)',     overlayOpacity: 0.25, overlayBlend: 'old',   saturation: -0.35, warmth: 25,  contrast: 0.82, vignette: 0.35,
-    grain: 0.28, lightLeak: 0.05, lightLeakColor: 'rgba(255,200,100,0.15)', borderStyle: 'wide', fade: 0.30 },
+    grain: 0.28, lightLeak: 0.05, lightLeakColor: 'rgba(255,200,100,0.15)', borderStyle: 'wide', fade: 0.30, shadows: 8, highlights: 5, sharpen: 0 },
   { id: 'lomo_style',     name: 'LOMO风格',     subtitle: '暗角迷幻',         category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#b85a7a',
     overlayTint: 'rgba(184,90,122,1)',     overlayOpacity: 0.18, overlayBlend: 'lomo',  saturation: 0.45, warmth: -5,  contrast: 1.45, vignette: 0.55,
-    grain: 0.22, lightLeak: 0.35, lightLeakColor: 'rgba(255,100,200,0.35)', borderStyle: 'none', fade: 0 },
+    grain: 0.22, lightLeak: 0.35, lightLeakColor: 'rgba(255,100,200,0.35)', borderStyle: 'none', fade: 0, shadows: 5, highlights: -10, sharpen: 0.3 },
   { id: 'film_grain',     name: '胶片颗粒',     subtitle: '颗粒质感',         category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#7a6a5a',
     overlayTint: 'rgba(122,106,90,1)',     overlayOpacity: 0.08, overlayBlend: 'grain',  saturation: 0,     warmth: 0,   contrast: 1.05, vignette: 0.10,
-    grain: 0.55, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.55, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 0, highlights: 0, sharpen: 0.3 },
   { id: 'bw_high_contrast', name: '高对比黑白', subtitle: '强烈反差',         category: 'vintage', brand: 'Vintage', isBW: true,  canisterColor: '#2a2a2a',
     overlayTint: 'rgba(25,22,18,1)',      overlayOpacity: 0.30, overlayBlend: 'bw-hard', saturation: -1,   warmth: 0,   contrast: 1.60, vignette: 0.40,
-    grain: 0.38, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0 },
+    grain: 0.38, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'none', fade: 0, shadows: 15, highlights: -10, sharpen: 0.4 },
   { id: 'light_leak',     name: '漏光效果',     subtitle: '光影斑驳',         category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#d87a9a',
     overlayTint: 'rgba(216,122,154,1)',     overlayOpacity: 0.10, overlayBlend: 'leak',  saturation: 0.15, warmth: 10,  contrast: 0.95, vignette: 0.15,
-    grain: 0.15, lightLeak: 0.55, lightLeakColor: 'rgba(255,150,200,0.45)', borderStyle: 'none', fade: 0 },
+    grain: 0.15, lightLeak: 0.55, lightLeakColor: 'rgba(255,150,200,0.45)', borderStyle: 'none', fade: 0, shadows: 3, highlights: 0, sharpen: 0.2 },
   { id: 'vintage_wide',   name: '宽幅胶片',     subtitle: '宽屏电影感',       category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#5a7a9a',
     overlayTint: 'rgba(90,122,154,1)',     overlayOpacity: 0.06, overlayBlend: 'cinema', saturation: 0.05, warmth: -3,  contrast: 1.12, vignette: 0.15,
-    grain: 0.18, lightLeak: 0.08, lightLeakColor: 'rgba(200,200,255,0.2)', borderStyle: 'wide', fade: 0 },
+    grain: 0.18, lightLeak: 0.08, lightLeakColor: 'rgba(200,200,255,0.2)', borderStyle: 'wide', fade: 0, shadows: 5, highlights: -5, sharpen: 0.4 },
   { id: 'vintage_fade',   name: '复古褪色',     subtitle: '回忆的色调',       category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#a89a8a',
     overlayTint: 'rgba(168,154,138,1)',     overlayOpacity: 0.20, overlayBlend: 'fade',  saturation: -0.45, warmth: 15,  contrast: 0.78, vignette: 0.28,
-    grain: 0.20, lightLeak: 0.12, lightLeakColor: 'rgba(255,220,180,0.2)', borderStyle: 'film-strip', fade: 0.35 },
+    grain: 0.20, lightLeak: 0.12, lightLeakColor: 'rgba(255,220,180,0.2)', borderStyle: 'film-strip', fade: 0.35, shadows: 8, highlights: 5, sharpen: 0 },
   { id: 'sepia_vintage',  name: '深褐色调',     subtitle: '古典怀旧',         category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#8a6a4a',
     overlayTint: 'rgba(138,106,74,1)',     overlayOpacity: 0.30, overlayBlend: 'sepia',  saturation: -0.25, warmth: 30,  contrast: 0.95, vignette: 0.32,
-    grain: 0.25, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'polaroid', fade: 0.20 },
+    grain: 0.25, lightLeak: 0, lightLeakColor: 'rgba(255,200,100,0.3)', borderStyle: 'polaroid', fade: 0.20, shadows: 5, highlights: 3, sharpen: 0 },
+  { id: 'cross_process',  name: '交叉冲洗',     subtitle: '偏色反差',         category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#6a8a4a',
+    overlayTint: 'rgba(106,138,74,1)',     overlayOpacity: 0.15, overlayBlend: 'vivid',  saturation: 0.35, warmth: -12, contrast: 1.25, vignette: 0.20,
+    grain: 0.15, lightLeak: 0.05, lightLeakColor: 'rgba(100,255,100,0.15)', borderStyle: 'none', fade: 0.05, shadows: 5, highlights: -10, sharpen: 0.4 },
+  { id: 'red_scale',      name: 'Redscale',     subtitle: '红调反转',         category: 'vintage', brand: 'Vintage', isBW: false, canisterColor: '#c04030',
+    overlayTint: 'rgba(192,64,48,1)',      overlayOpacity: 0.22, overlayBlend: 'warm',   saturation: -0.10,warmth: 30,  contrast: 1.10, vignette: 0.20,
+    grain: 0.18, lightLeak: 0, lightLeakColor: 'rgba(255,100,50,0.2)', borderStyle: 'none', fade: 0, shadows: 8, highlights: -5, sharpen: 0.3 },
 ];
 
 export interface FilterCategory {
@@ -225,6 +267,17 @@ export function createFilterProcessorHTML(): string {
     if (v < 0) return 0;
     if (v > 255) return 255;
     return Math.round(v);
+  }
+
+  // 胶片 S 曲线：肩部压制高光溢出，趾部保留暗部细节
+  function sCurve(v) {
+    var n = v / 255;
+    // 用两段二次曲线拼接，拐点在 0.45
+    if (n < 0.45) {
+      return 255 * (0.45 * 2.2 * n * n);
+    } else {
+      return 255 * (1 - (1 - 0.45) * 1.8 * (1 - n) * (1 - n));
+    }
   }
 
   function applyFilter(img, params) {
@@ -367,16 +420,75 @@ export function createFilterProcessorHTML(): string {
 
     ctx.putImageData(imageData, 0, 0);
 
-    // 10. 胶片 S 曲线（模拟真实胶片的肩部和趾部压制）
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(canvas, 0, 0);
-    ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.5;
-    ctx.drawImage(canvas, 0, 0);
-    ctx.globalAlpha = 1.0;
-    ctx.globalCompositeOperation = 'source-over';
+    // 10. 胶片 S 曲线（像素级：肩部压制高光，趾部提升暗部）
+    var sData = ctx.getImageData(0, 0, w, h);
+    var sd = sData.data;
+    for (var i = 0; i < sd.length; i += 4) {
+      if (!params.isBW) {
+        // 彩色 S 曲线
+        sd[i]     = clamp(sCurve(sd[i]));
+        sd[i + 1] = clamp(sCurve(sd[i + 1]));
+        sd[i + 2] = clamp(sCurve(sd[i + 2]));
+      } else {
+        // 黑白 S 曲线（更强）
+        var v = sd[i];
+        v = clamp(sCurve(v));
+        sd[i] = sd[i + 1] = sd[i + 2] = v;
+      }
+    }
+    ctx.putImageData(sData, 0, 0);
 
-    // 11. 边框效果
+    // 11. 阴影/高光调整
+    if ((params.shadows > 0 || params.highlights !== 0) && params.shadows !== undefined) {
+      var shData = ctx.getImageData(0, 0, w, h);
+      var shd = shData.data;
+      var shAmt = (params.shadows || 0) / 100;
+      var hlAmt = (params.highlights || 0) / 100;
+      for (var i = 0; i < shd.length; i += 4) {
+        var lum = (shd[i] * 0.299 + shd[i + 1] * 0.587 + shd[i + 2] * 0.114) / 255;
+        // 阴影（暗部提亮）
+        if (shAmt > 0 && lum < 0.5) {
+          var shFactor = Math.pow(1 - lum * 2, 2) * shAmt * 30;
+          shd[i] = clamp(shd[i] + shFactor);
+          shd[i + 1] = clamp(shd[i + 1] + shFactor);
+          shd[i + 2] = clamp(shd[i + 2] + shFactor);
+        }
+        // 高光（亮部压制或提亮）
+        if (hlAmt !== 0 && lum > 0.5) {
+          var hlFactor = Math.pow((lum - 0.5) * 2, 2) * hlAmt * 30;
+          shd[i] = clamp(shd[i] + hlFactor);
+          shd[i + 1] = clamp(shd[i + 1] + hlFactor);
+          shd[i + 2] = clamp(shd[i + 2] + hlFactor);
+        }
+      }
+      ctx.putImageData(shData, 0, 0);
+    }
+
+    // 12. 锐化（Unsharp Mask）
+    if (params.sharpen > 0.01) {
+      var origData = ctx.getImageData(0, 0, w, h);
+      var od = origData.data;
+      // 简化 3x3 锐化卷积
+      var sharpAmount = params.sharpen;
+      for (var y = 1; y < h - 1; y++) {
+        for (var x = 1; x < w - 1; x++) {
+          var idx = (y * w + x) * 4;
+          for (var c = 0; c < 3; c++) {
+            var center = od[idx + c] * 5;
+            var neighbors =
+              od[((y - 1) * w + x) * 4 + c] +
+              od[((y + 1) * w + x) * 4 + c] +
+              od[(y * w + x - 1) * 4 + c] +
+              od[(y * w + x + 1) * 4 + c];
+            var sharp = center - neighbors;
+            sd[idx + c] = clamp(od[idx + c] + sharp * sharpAmount * 0.25);
+          }
+        }
+      }
+      ctx.putImageData(ctx.getImageData(0, 0, w, h), 0, 0);
+    }
+
+    // 13. 边框效果
     if (params.borderStyle && params.borderStyle !== 'none') {
       if (params.borderStyle === 'polaroid') {
         ctx.fillStyle = '#ffffff';
@@ -463,5 +575,8 @@ export function buildFilterParams(preset: FilmFilterPreset) {
     lightLeakB: leakColor.b,
     borderStyle: preset.borderStyle,
     fade: preset.fade,
+    shadows: preset.shadows,
+    highlights: preset.highlights,
+    sharpen: preset.sharpen,
   };
 }

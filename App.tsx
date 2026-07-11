@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
@@ -46,7 +47,9 @@ export default function App() {
   const [galleryPhotos, setGalleryPhotos] = useState<{ uri: string; id: string; mediaType: 'photo' | 'video' }[]>([]);
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [mode, setMode] = useState<'picture' | 'video'>('picture');
-  const [focusPoint, setFocusPoint] = useState<{ x: number; y: number } | null>(null);
+  const [focusVisible, setFocusVisible] = useState(false);
+  const focusAnim = useRef(new Animated.Value(0)).current;
+  const focusPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const cameraRef = useRef<CameraView>(null);
   const webViewRef = useRef<WebView>(null);
   const pendingRequests = useRef<Map<string, { resolve: (v: string) => void; reject: (e: Error) => void }>>(new Map());
@@ -147,14 +150,23 @@ export default function App() {
     setFlashMode((prev) => (prev === 'off' ? 'on' : 'off'));
   }, []);
 
-  // 点击聚焦
+  // 点击聚焦（带动画反馈，不阻止原生对焦）
   const handleFocus = useCallback((x: number, y: number) => {
-    setFocusPoint({ x, y });
+    focusPos.current = { x, y };
+    focusAnim.setValue(0);
+    setFocusVisible(true);
 
-    setTimeout(() => {
-      setFocusPoint(null);
-    }, 1500);
-  }, []);
+    Animated.sequence([
+      Animated.timing(focusAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.timing(focusAnim, { toValue: 0.8, duration: 150, useNativeDriver: true }),
+    ]).start(() => {
+      setTimeout(() => {
+        Animated.timing(focusAnim, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => {
+          setFocusVisible(false);
+        });
+      }, 600);
+    });
+  }, [focusAnim]);
 
   // 切换前后摄像头
   const toggleCameraFacing = useCallback(() => {
@@ -488,6 +500,17 @@ export default function App() {
         active={true}
       />
 
+      {/* ===== 聚焦触摸捕获层（捕获坐标但不阻止相机原生对焦） ===== */}
+      <View
+        style={StyleSheet.absoluteFill}
+        onStartShouldSetResponderCapture={() => false}
+        onResponderGrant={(e) => {
+          const touch = e.nativeEvent.touches[0];
+          handleFocus(touch.locationX, touch.locationY);
+        }}
+        pointerEvents="box-none"
+      />
+
       {/* ===== 隐藏的滤镜处理器 WebView ===== */}
       <WebView
         ref={webViewRef}
@@ -562,20 +585,43 @@ export default function App() {
           return <>{layers}</>;
         })()}
 
-        {/* 聚焦指示器 */}
-        {focusPoint && (
-          <View 
+        {/* 聚焦指示器（带动画） */}
+        {focusVisible && (
+          <Animated.View
             style={[
               s.focusIndicator,
-              { 
-                left: focusPoint.x - 40, 
-                top: focusPoint.y - 40,
+              {
+                left: focusPos.current.x - 40,
+                top: focusPos.current.y - 40,
+                opacity: focusAnim,
+                transform: [
+                  {
+                    scale: focusAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1.5, 1],
+                    }),
+                  },
+                ],
               },
             ]}
           >
-            <View style={s.focusRing} />
-            <View style={s.focusInner} />
-          </View>
+            <Animated.View
+              style={[
+                s.focusRing,
+                {
+                  transform: [
+                    {
+                      scale: focusAnim.interpolate({
+                        inputRange: [0, 0.8, 1],
+                        outputRange: [1.8, 1.2, 1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+            <View style={s.focusDot} />
+          </Animated.View>
         )}
 
         {/* 右侧参数显示 */}
@@ -892,17 +938,15 @@ const s = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#fff',
-    opacity: 0.8,
   },
-  focusInner: {
+  focusDot: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
   paramDot: {
     width: 5, height: 5,
