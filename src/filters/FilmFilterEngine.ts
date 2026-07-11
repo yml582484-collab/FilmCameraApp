@@ -269,17 +269,6 @@ export function createFilterProcessorHTML(): string {
     return Math.round(v);
   }
 
-  // 胶片 S 曲线：肩部压制高光溢出，趾部保留暗部细节
-  function sCurve(v) {
-    var n = v / 255;
-    // 用两段二次曲线拼接，拐点在 0.45
-    if (n < 0.45) {
-      return 255 * (0.45 * 2.2 * n * n);
-    } else {
-      return 255 * (1 - (1 - 0.45) * 1.8 * (1 - n) * (1 - n));
-    }
-  }
-
   function applyFilter(img, params) {
     var w = img.width;
     var h = img.height;
@@ -420,75 +409,7 @@ export function createFilterProcessorHTML(): string {
 
     ctx.putImageData(imageData, 0, 0);
 
-    // 10. 胶片 S 曲线（像素级：肩部压制高光，趾部提升暗部）
-    var sData = ctx.getImageData(0, 0, w, h);
-    var sd = sData.data;
-    for (var i = 0; i < sd.length; i += 4) {
-      if (!params.isBW) {
-        // 彩色 S 曲线
-        sd[i]     = clamp(sCurve(sd[i]));
-        sd[i + 1] = clamp(sCurve(sd[i + 1]));
-        sd[i + 2] = clamp(sCurve(sd[i + 2]));
-      } else {
-        // 黑白 S 曲线（更强）
-        var v = sd[i];
-        v = clamp(sCurve(v));
-        sd[i] = sd[i + 1] = sd[i + 2] = v;
-      }
-    }
-    ctx.putImageData(sData, 0, 0);
-
-    // 11. 阴影/高光调整
-    if ((params.shadows > 0 || params.highlights !== 0) && params.shadows !== undefined) {
-      var shData = ctx.getImageData(0, 0, w, h);
-      var shd = shData.data;
-      var shAmt = (params.shadows || 0) / 100;
-      var hlAmt = (params.highlights || 0) / 100;
-      for (var i = 0; i < shd.length; i += 4) {
-        var lum = (shd[i] * 0.299 + shd[i + 1] * 0.587 + shd[i + 2] * 0.114) / 255;
-        // 阴影（暗部提亮）
-        if (shAmt > 0 && lum < 0.5) {
-          var shFactor = Math.pow(1 - lum * 2, 2) * shAmt * 30;
-          shd[i] = clamp(shd[i] + shFactor);
-          shd[i + 1] = clamp(shd[i + 1] + shFactor);
-          shd[i + 2] = clamp(shd[i + 2] + shFactor);
-        }
-        // 高光（亮部压制或提亮）
-        if (hlAmt !== 0 && lum > 0.5) {
-          var hlFactor = Math.pow((lum - 0.5) * 2, 2) * hlAmt * 30;
-          shd[i] = clamp(shd[i] + hlFactor);
-          shd[i + 1] = clamp(shd[i + 1] + hlFactor);
-          shd[i + 2] = clamp(shd[i + 2] + hlFactor);
-        }
-      }
-      ctx.putImageData(shData, 0, 0);
-    }
-
-    // 12. 锐化（Unsharp Mask）
-    if (params.sharpen > 0.01) {
-      var origData = ctx.getImageData(0, 0, w, h);
-      var od = origData.data;
-      // 简化 3x3 锐化卷积
-      var sharpAmount = params.sharpen;
-      for (var y = 1; y < h - 1; y++) {
-        for (var x = 1; x < w - 1; x++) {
-          var idx = (y * w + x) * 4;
-          for (var c = 0; c < 3; c++) {
-            var center = od[idx + c] * 5;
-            var neighbors =
-              od[((y - 1) * w + x) * 4 + c] +
-              od[((y + 1) * w + x) * 4 + c] +
-              od[(y * w + x - 1) * 4 + c] +
-              od[(y * w + x + 1) * 4 + c];
-            var sharp = center - neighbors;
-            sd[idx + c] = clamp(od[idx + c] + sharp * sharpAmount * 0.25);
-          }
-        }
-      }
-      ctx.putImageData(ctx.getImageData(0, 0, w, h), 0, 0);
-    }
-
-    // 13. 边框效果
+    // 10. 边框效果
     if (params.borderStyle && params.borderStyle !== 'none') {
       if (params.borderStyle === 'polaroid') {
         ctx.fillStyle = '#ffffff';
