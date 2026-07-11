@@ -538,12 +538,6 @@ export default function App() {
             </>
           );
         })()}
-        {/* 取景框四角 */}
-        <View style={s.cornerTL} />
-        <View style={s.cornerTR} />
-        <View style={s.cornerBL} />
-        <View style={s.cornerBR} />
-
         {/* 网格线（可切换） */}
         {showGrid && (
           <View style={s.gridOverlay}>
@@ -727,41 +721,45 @@ export default function App() {
           {/* 控制按钮行 */}
           <View style={s.controlRow}>
             {/* 左：翻转相机 */}
-            <TouchableOpacity style={s.sideBtn} onPress={toggleCameraFacing} activeOpacity={0.7}>
-              <Text style={s.sideIcon}>⟲</Text>
-            </TouchableOpacity>
+            <View style={s.controlLeft}>
+              <TouchableOpacity style={s.sideBtn} onPress={toggleCameraFacing} activeOpacity={0.7}>
+                <Text style={s.sideIcon}>⟲</Text>
+              </TouchableOpacity>
+            </View>
 
             {/* 中间：快门按钮（拍照）或录制按钮（视频） */}
-            {mode === 'picture' ? (
-              <TouchableOpacity
-                style={[s.shutterOuter, isCapturing && s.shutterActive]}
-                onPress={takePicture}
-                disabled={isCapturing}
-                activeOpacity={0.9}
-              >
-                <View style={s.shutterMiddle}>
-                  <View style={s.shutterInner} />
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[s.recordBtn, isRecording && s.recordBtnActive]}
-                onPress={toggleRecording}
-                disabled={isCapturing}
-                activeOpacity={0.9}
-              >
-                {isRecording ? <View style={s.recordIndicator} /> : <View style={s.recordInner} />}
-              </TouchableOpacity>
-            )}
+            <View style={s.controlCenter}>
+              {mode === 'picture' ? (
+                <TouchableOpacity
+                  style={[s.shutterBtn, isCapturing && s.shutterActive]}
+                  onPress={takePicture}
+                  disabled={isCapturing}
+                  activeOpacity={0.85}
+                >
+                  <View style={s.shutterRing} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[s.recordBtn, isRecording && s.recordBtnActive]}
+                  onPress={toggleRecording}
+                  disabled={isCapturing}
+                  activeOpacity={0.9}
+                >
+                  {isRecording ? <View style={s.recordIndicator} /> : <View style={s.recordInner} />}
+                </TouchableOpacity>
+              )}
+            </View>
 
-            {/* 右：网格 + 比例 */}
-            <View style={s.rightControls}>
-              <TouchableOpacity style={s.sideBtn} onPress={cycleAspectRatio} activeOpacity={0.7}>
-                <Text style={s.ratioTxt}>{aspectRatio ? '1:1' : '全'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.sideBtn} onPress={toggleGrid} activeOpacity={0.7}>
-                <Text style={s.sideIcon}>{showGrid ? '▦' : '⊞'}</Text>
-              </TouchableOpacity>
+            {/* 右：比例 + 网格 */}
+            <View style={s.controlRight}>
+              <View style={s.rightControls}>
+                <TouchableOpacity style={s.sideBtn} onPress={cycleAspectRatio} activeOpacity={0.7}>
+                  <Text style={s.ratioTxt}>{aspectRatio ? '1:1' : '全'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.sideBtn} onPress={toggleGrid} activeOpacity={0.7}>
+                  <Text style={s.sideIcon}>{showGrid ? '▦' : '⊞'}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -797,32 +795,6 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-
-  // --- 取景框四角 ---
-  cornerTL: {
-    position: 'absolute', top: 48, left: 16,
-    width: 28, height: 28,
-    borderTopWidth: 2, borderLeftWidth: 2,
-    borderColor: 'rgba(255,255,255,0.45)',
-  },
-  cornerTR: {
-    position: 'absolute', top: 48, right: 16,
-    width: 28, height: 28,
-    borderTopWidth: 2, borderRightWidth: 2,
-    borderColor: 'rgba(255,255,255,0.45)',
-  },
-  cornerBL: {
-    position: 'absolute', bottom: 250, left: 16,
-    width: 28, height: 28,
-    borderBottomWidth: 2, borderLeftWidth: 2,
-    borderColor: 'rgba(255,255,255,0.45)',
-  },
-  cornerBR: {
-    position: 'absolute', bottom: 250, right: 16,
-    width: 28, height: 28,
-    borderBottomWidth: 2, borderRightWidth: 2,
-    borderColor: 'rgba(255,255,255,0.45)',
   },
 
   // --- 顶部信息栏 ---
@@ -1066,10 +1038,23 @@ const s = StyleSheet.create({
   controlRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 40,
     paddingTop: 4,
     paddingBottom: 2,
+  },
+  controlLeft: {
+    flex: 1,
+    alignItems: 'flex-start',
+    paddingLeft: 20,
+  },
+  controlCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  controlRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+    paddingRight: 20,
   },
   sideBtn: {
     width: 44, height: 44,
@@ -1091,39 +1076,30 @@ const s = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // 快门（CCD 风格：外圈金属环 → 中圈 → 内核）
-  shutterOuter: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+  // 快门（相机质感圆形按钮）
+  shutterBtn: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    // 外发光效果
-    shadowColor: '#d4a574',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowColor: 'rgba(0,0,0,0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  shutterRing: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: '#ccc',
+    backgroundColor: '#f5f5f5',
   },
   shutterActive: {
-    backgroundColor: '#d4a574',
-  },
-  shutterMiddle: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: '#e8e8e8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2.5,
-    borderColor: '#bbb',
-  },
-  shutterInner: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#fff',
+    backgroundColor: '#e0e0e0',
   },
 
   // --- 视频录制按钮 ---
