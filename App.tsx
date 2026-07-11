@@ -47,7 +47,7 @@ export default function App() {
   const [galleryPhotos, setGalleryPhotos] = useState<{ uri: string; id: string; mediaType: 'photo' | 'video' }[]>([]);
   const [flashMode, setFlashMode] = useState<'off' | 'on'>('off');
   const [mode, setMode] = useState<'picture' | 'video'>('picture');
-  const [aspectRatio, setAspectRatio] = useState<string | null>('9:16');
+  const [aspectRatio, setAspectRatio] = useState<string | null>(null);
   const [focusVisible, setFocusVisible] = useState(false);
   const focusAnim = useRef(new Animated.Value(0)).current;
   const focusPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -151,13 +151,9 @@ export default function App() {
     setFlashMode((prev) => (prev === 'off' ? 'on' : 'off'));
   }, []);
 
-  // 切换比例
+  // 切换比例（null = 原始比例，1:1 = 正方形）
   const cycleAspectRatio = useCallback(() => {
-    setAspectRatio((prev) => {
-      if (prev === '9:16') return '4:3';
-      if (prev === '4:3') return '1:1';
-      return '9:16';
-    });
+    setAspectRatio((prev) => (prev === null ? '1:1' : null));
   }, []);
 
   // 点击聚焦（带动画反馈，不阻止原生对焦）
@@ -751,7 +747,7 @@ export default function App() {
             {/* 右：网格 + 比例 */}
             <View style={s.rightControls}>
               <TouchableOpacity style={s.sideBtn} onPress={cycleAspectRatio} activeOpacity={0.7}>
-                <Text style={s.ratioTxt}>{aspectRatio}</Text>
+                <Text style={s.ratioTxt}>{aspectRatio ? '全' : '1:1'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={s.sideBtn} onPress={toggleGrid} activeOpacity={0.7}>
                 <Text style={s.sideIcon}>{showGrid ? '▦' : '⊞'}</Text>
